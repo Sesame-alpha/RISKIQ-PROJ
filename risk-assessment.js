@@ -1,895 +1,974 @@
-const form =
-    document.getElementById(
-        "riskAssessmentForm"
-    );
+document.addEventListener("DOMContentLoaded", () => {
+
+    const form =
+        document.getElementById("assessmentForm");
+
+    const verificationSection =
+        document.getElementById("verificationSection");
+
+    const riskSection =
+        document.getElementById("riskSection");
+
+    const verificationContent =
+        document.getElementById("verificationContent");
+
+    const verificationBadge =
+        document.getElementById("verificationBadge");
+
+    const verificationActions =
+        document.getElementById("verificationActions");
+
+    const humanVerifyBtn =
+        document.getElementById("humanVerifyBtn");
 
 
-let currentApplicationId = null;
+    let currentApplication = null;
+    let dataVerified = false;
 
 
-// ==========================================
-// RUN ASSESSMENT
-// ==========================================
+    // ==========================================
+    // GET FORM DATA
+    // ==========================================
 
-form.addEventListener(
-    "submit",
-    function (event) {
+    function getFormData() {
 
-        event.preventDefault();
+        const monthlyIncome =
+            Number(document.getElementById("monthlyIncome").value);
+
+        const monthlyExpenses =
+            Number(document.getElementById("monthlyExpenses").value);
+
+        const monthlyDebt =
+            Number(document.getElementById("monthlyDebt").value);
+
+        const loanAmount =
+            Number(document.getElementById("loanAmount").value);
+
+        const loanTerm =
+            Number(document.getElementById("loanTerm").value);
+
+        const disposableIncome =
+            monthlyIncome - monthlyExpenses - monthlyDebt;
+
+        const debtRatio =
+            monthlyIncome > 0
+                ? (monthlyDebt / monthlyIncome) * 100
+                : 100;
+
+        const affordabilityRatio =
+            monthlyIncome > 0
+                ? (disposableIncome / monthlyIncome) * 100
+                : 0;
 
 
-        // ----------------------------------
-        // GET BORROWER DATA
-        // ----------------------------------
+        return {
 
-        const borrower = {
-
-            id:
-                Date.now(),
-
+            id: Date.now(),
 
             fullName:
-                document
-                    .getElementById("fullName")
-                    .value
-                    .trim(),
-
+                document.getElementById("fullName").value.trim(),
 
             idNumber:
-                document
-                    .getElementById("omang")
-                    .value
-                    .trim(),
+                document.getElementById("idNumber").value.trim(),
 
+            phone:
+                document.getElementById("phone").value.trim(),
 
             employmentStatus:
-                document
-                    .getElementById("employmentStatus")
-                    .value,
-
+                document.getElementById("employmentStatus").value,
 
             yearsEmployed:
                 Number(
-                    document
-                        .getElementById("yearsEmployed")
-                        .value
+                    document.getElementById("yearsEmployed").value
                 ),
 
+            monthlyIncome,
+
+            monthlyExpenses,
+
+            monthlyDebt,
 
             incomeStability:
-                document
-                    .getElementById("incomeStability")
-                    .value,
+                document.getElementById("incomeStability").value,
 
+            loanAmount,
 
-            monthlyIncome:
-                Number(
-                    document
-                        .getElementById("monthlyIncome")
-                        .value
-                ),
-
-
-            monthlyExpenses:
-                Number(
-                    document
-                        .getElementById("monthlyExpenses")
-                        .value
-                ),
-
-
-            monthlyDebt:
-                Number(
-                    document
-                        .getElementById("monthlyDebt")
-                        .value
-                ),
-
-
-            loanAmount:
-                Number(
-                    document
-                        .getElementById("loanAmount")
-                        .value
-                ),
-
+            loanTerm,
 
             previousLoans:
                 Number(
-                    document
-                        .getElementById("previousLoans")
-                        .value
+                    document.getElementById("previousLoans").value
                 ),
-
 
             latePayments:
                 Number(
-                    document
-                        .getElementById("latePayments")
-                        .value
+                    document.getElementById("latePayments").value
                 ),
-
 
             previousDefaults:
                 Number(
-                    document
-                        .getElementById("previousDefaults")
-                        .value
+                    document.getElementById("previousDefaults").value
                 ),
 
-
             repaymentBehaviour:
-                document
-                    .getElementById("repaymentBehaviour")
-                    .value
+                document.getElementById("repaymentBehaviour").value,
+
+            disposableIncome,
+
+            debtRatio,
+
+            affordabilityRatio,
+
+            verificationStatus: "Pending",
+
+            riskScore: 0,
+
+            riskLevel: "",
+
+            reasoning: [],
+
+            decision: "Pending",
+
+            createdAt:
+                new Date().toLocaleString()
 
         };
 
+    }
 
-        // ----------------------------------
-        // VERIFY DATA FIRST
-        // ----------------------------------
 
-        const verification =
-            verifyBorrower(
-                borrower
+    // ==========================================
+    // VERIFICATION
+    // ==========================================
+
+    function verifyBorrower(application) {
+
+        const verificationData =
+            RiskIQStorage.getVerificationData();
+
+
+        const record =
+            verificationData.find(item =>
+                item.idNumber === application.idNumber
             );
 
 
-        showVerification(
-            verification
-        );
+        // RECORD FOUND
+        if (record) {
+
+            const nameMatches =
+                record.fullName.toLowerCase() ===
+                application.fullName.toLowerCase();
+
+            const incomeMatches =
+                Number(record.monthlyIncome) ===
+                Number(application.monthlyIncome);
+
+            const debtMatches =
+                Number(record.monthlyDebt) ===
+                Number(application.monthlyDebt);
+
+            const employmentMatches =
+                record.employmentStatus ===
+                application.employmentStatus;
 
 
-        // ----------------------------------
-        // CALCULATE RISK
-        // ----------------------------------
+            const allCorrect =
+                nameMatches &&
+                incomeMatches &&
+                debtMatches &&
+                employmentMatches;
+
+
+            return {
+
+                found: true,
+
+                verified: allCorrect,
+
+                record: record,
+
+                checks: {
+
+                    name: nameMatches,
+
+                    income: incomeMatches,
+
+                    debt: debtMatches,
+
+                    employment: employmentMatches
+
+                }
+
+            };
+
+        }
+
+
+        // RECORD NOT FOUND
+        return {
+
+            found: false,
+
+            verified: false,
+
+            record: null,
+
+            checks: {}
+
+        };
+
+    }
+
+
+    // ==========================================
+    // SHOW VERIFICATION RESULT
+    // ==========================================
+
+    function showVerification(result) {
+
+        verificationSection.classList.remove("hidden");
+
+        document.getElementById("step2")
+            .classList.add("active");
+
+
+        if (result.verified) {
+
+            dataVerified = true;
+
+            verificationBadge.textContent =
+                "DATA VERIFIED";
+
+            verificationBadge.style.background =
+                "#EDF8F2";
+
+            verificationBadge.style.color =
+                "#247A57";
+
+
+            verificationContent.innerHTML = `
+
+                <div class="verification-message verified">
+
+                    <strong>
+                        <i class="fa-solid fa-circle-check"></i>
+                        Data Verified Successfully
+                    </strong>
+
+                    <br>
+
+                    The submitted borrower information matches the
+                    available verification record.
+
+                </div>
+
+                <div class="verification-details">
+
+                    <div>
+                        <span>Name</span>
+                        <strong>✓ Verified</strong>
+                    </div>
+
+                    <div>
+                        <span>Monthly Income</span>
+                        <strong>✓ Verified</strong>
+                    </div>
+
+                    <div>
+                        <span>Monthly Debt</span>
+                        <strong>✓ Verified</strong>
+                    </div>
+
+                    <div>
+                        <span>Employment</span>
+                        <strong>✓ Verified</strong>
+                    </div>
+
+                </div>
+            `;
+
+
+            currentApplication.verificationStatus =
+                "Verified";
+
+
+            setTimeout(() => {
+
+                calculateAndShowRisk();
+
+            }, 500);
+
+        }
+
+        else {
+
+            dataVerified = false;
+
+            verificationBadge.textContent =
+                "HUMAN REVIEW REQUIRED";
+
+            verificationBadge.style.background =
+                "#FFF6E5";
+
+            verificationBadge.style.color =
+                "#B97813";
+
+
+            let message = "";
+
+
+            if (!result.found) {
+
+                message = `
+                    No matching record was found in the demo
+                    verification database. A human reviewer must
+                    confirm the information before assessment.
+                `;
+
+            } else {
+
+                message = `
+                    A verification record was found, but some submitted
+                    information does not match the stored record.
+                    Human review is required.
+                `;
+
+            }
+
+
+            verificationContent.innerHTML = `
+
+                <div class="verification-message unverified">
+
+                    <strong>
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        Verification Requires Review
+                    </strong>
+
+                    <br>
+
+                    ${message}
+
+                </div>
+            `;
+
+
+            currentApplication.verificationStatus =
+                "Human Review Required";
+
+
+            verificationActions.classList.remove("hidden");
+
+        }
+
+
+        verificationSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+
+
+    // ==========================================
+    // HUMAN APPROVES DATA
+    // ==========================================
+
+    humanVerifyBtn.addEventListener("click", () => {
+
+        dataVerified = true;
+
+        verificationActions.classList.add("hidden");
+
+        verificationBadge.textContent =
+            "HUMAN VERIFIED";
+
+        verificationBadge.style.background =
+            "#EDF8F2";
+
+        verificationBadge.style.color =
+            "#247A57";
+
+
+        currentApplication.verificationStatus =
+            "Human Verified";
+
+
+        verificationContent.innerHTML += `
+
+            <div class="verification-message verified"
+                 style="margin-top:15px;">
+
+                <strong>
+                    <i class="fa-solid fa-user-check"></i>
+                    Human Review Approved
+                </strong>
+
+                <br>
+
+                The reviewer has approved the borrower information.
+                Risk assessment can now continue.
+
+            </div>
+        `;
+
+
+        calculateAndShowRisk();
+
+    });
+
+
+    // ==========================================
+    // RISK ENGINE
+    // ==========================================
+
+    function calculateRisk(application) {
 
         const rules =
             RiskIQStorage.getRules();
 
 
-        const result =
-            calculateRisk(
-                borrower,
-                rules
-            );
+        let score = 0;
+
+        let reasoning = [];
 
 
-        // ----------------------------------
-        // SAVE APPLICATION
-        // ----------------------------------
+        rules.forEach(rule => {
 
-        const application = {
-
-            ...borrower,
-
-            score:
-                result.score,
-
-            risk:
-                result.risk,
-
-            reasoning:
-                result.reasoning,
-
-            verificationStatus:
-                verification.verified
-                    ? "Verified"
-                    : "Possible Mismatch",
+            let rulePassed = false;
 
 
-            verificationMessage:
-                verification.message,
+            // -------------------------------
+            // REPAYMENT BEHAVIOUR
+            // -------------------------------
+
+            if (
+                rule.field ===
+                "repaymentBehaviour"
+            ) {
+
+                if (
+                    application.repaymentBehaviour ===
+                    rule.condition
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
 
 
-            status:
-                verification.verified
-                    ? "Pending Human Review"
-                    : "Verification Review Required",
+            // -------------------------------
+            // INCOME STABILITY
+            // -------------------------------
+
+            if (
+                rule.field ===
+                "incomeStability"
+            ) {
+
+                if (
+                    application.incomeStability ===
+                    rule.condition
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
 
 
-            date:
-                new Date()
-                    .toLocaleString()
+            // -------------------------------
+            // PREVIOUS DEFAULTS
+            // -------------------------------
 
-        };
+            if (
+                rule.field ===
+                "previousDefaults"
+            ) {
+
+                if (
+                    rule.condition === "zero" &&
+                    application.previousDefaults === 0
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
 
 
-        RiskIQStorage.saveApplication(
-            application
+            // -------------------------------
+            // DEBT RATIO
+            // -------------------------------
+
+            if (
+                rule.field ===
+                "debtRatio"
+            ) {
+
+                if (
+                    rule.condition === "low" &&
+                    application.debtRatio <= 30
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
+
+
+            // -------------------------------
+            // AFFORDABILITY
+            // -------------------------------
+
+            if (
+                rule.field ===
+                "affordability"
+            ) {
+
+                if (
+                    rule.condition === "good" &&
+                    application.affordabilityRatio >= 30
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
+
+
+            // -------------------------------
+            // CUSTOM RULES
+            // -------------------------------
+
+            if (
+                rule.field === "latePayments"
+            ) {
+
+                if (
+                    rule.condition === "low" &&
+                    application.latePayments <= 2
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
+
+
+            if (
+                rule.field === "yearsEmployed"
+            ) {
+
+                if (
+                    rule.condition === "experienced" &&
+                    application.yearsEmployed >= 2
+                ) {
+
+                    rulePassed = true;
+
+                }
+
+            }
+
+
+            // -------------------------------
+            // ADD POINTS
+            // -------------------------------
+
+            if (rulePassed) {
+
+                score += Number(rule.points);
+
+
+                reasoning.push({
+
+                    positive: true,
+
+                    title: rule.name,
+
+                    description:
+                        rule.description +
+                        " +" +
+                        rule.points +
+                        " points."
+
+                });
+
+            }
+
+            else {
+
+                reasoning.push({
+
+                    positive: false,
+
+                    title: rule.name,
+
+                    description:
+                        "This rule was not fully satisfied. " +
+                        "No points were added."
+
+                });
+
+            }
+
+        });
+
+
+        // NEVER ABOVE 100
+
+        score = Math.min(
+            Math.max(score, 0),
+            100
         );
 
 
-        currentApplicationId =
-            application.id;
+        // RISK LEVEL
+
+        let riskLevel = "";
 
 
-        // ----------------------------------
-        // SHOW RESULT
-        // ----------------------------------
+        if (score >= 75) {
 
-        showRiskResult(
-            result,
-            verification
-        );
+            riskLevel = "LOW RISK";
 
+        }
 
-    }
-);
+        else if (score >= 50) {
 
+            riskLevel = "MEDIUM RISK";
 
+        }
 
-// ==========================================
-// VERIFY BORROWER
-// ==========================================
+        else {
 
-function verifyBorrower(borrower) {
+            riskLevel = "HIGH RISK";
 
-    const records =
-        RiskIQStorage.getVerificationData();
+        }
 
 
-    const record =
-        records.find(
-            item =>
-                item.idNumber ===
-                borrower.idNumber
-        );
+        // ADD IMPORTANT EXTRA EXPLANATIONS
+
+        if (
+            application.previousDefaults > 0
+        ) {
+
+            reasoning.unshift({
+
+                positive: false,
+
+                title: "Previous Default History",
+
+                description:
+                    application.previousDefaults +
+                    " previous default(s) recorded. " +
+                    "This increases lending risk."
+
+            });
+
+        }
 
 
-    // --------------------------------------
-    // NO RECORD FOUND
-    // --------------------------------------
+        if (
+            application.latePayments > 2
+        ) {
 
-    if (!record) {
+            reasoning.unshift({
+
+                positive: false,
+
+                title: "Late Payment Pattern",
+
+                description:
+                    application.latePayments +
+                    " late payments were reported, " +
+                    "indicating weaker repayment behaviour."
+
+            });
+
+        }
+
+
+        if (
+            application.debtRatio > 40
+        ) {
+
+            reasoning.unshift({
+
+                positive: false,
+
+                title: "High Debt-to-Income Burden",
+
+                description:
+                    "Debt represents " +
+                    application.debtRatio.toFixed(1) +
+                    "% of monthly income, reducing repayment capacity."
+
+            });
+
+        }
+
 
         return {
 
-            verified: false,
+            score,
 
-            message:
-                "No matching borrower record was found. Human verification is required.",
+            riskLevel,
 
-            mismatches: [
-                "Identity record not found"
-            ]
+            reasoning
 
         };
 
     }
 
 
-    const mismatches = [];
+    // ==========================================
+    // SHOW RISK
+    // ==========================================
+
+    function calculateAndShowRisk() {
+
+        if (!dataVerified) return;
 
 
-    // NAME
-
-    if (
-        record.fullName.toLowerCase() !==
-        borrower.fullName.toLowerCase()
-    ) {
-
-        mismatches.push(
-            "Full name does not match stored data"
-        );
-
-    }
+        const result =
+            calculateRisk(currentApplication);
 
 
-    // INCOME
+        currentApplication.riskScore =
+            result.score;
 
-    if (
-        Number(record.monthlyIncome) !==
-        Number(borrower.monthlyIncome)
-    ) {
+        currentApplication.riskLevel =
+            result.riskLevel;
 
-        mismatches.push(
-            "Monthly income differs from stored data"
-        );
-
-    }
+        currentApplication.reasoning =
+            result.reasoning;
 
 
-    // DEBT
-
-    if (
-        Number(record.monthlyDebt) !==
-        Number(borrower.monthlyDebt)
-    ) {
-
-        mismatches.push(
-            "Monthly debt differs from stored data"
-        );
-
-    }
+        document.getElementById("step3")
+            .classList.add("active");
 
 
-    // EMPLOYMENT
-
-    if (
-        record.employmentStatus !==
-        borrower.employmentStatus
-    ) {
-
-        mismatches.push(
-            "Employment status differs from stored data"
-        );
-
-    }
+        riskSection.classList.remove("hidden");
 
 
-    return {
-
-        verified:
-            mismatches.length === 0,
+        animateScore(result.score);
 
 
-        message:
-            mismatches.length === 0
-                ? "Data verified successfully against available demo records."
-                : "Possible data mismatch detected. Human review is required.",
+        const riskLevel =
+            document.getElementById("riskLevel");
 
 
-        mismatches:
-            mismatches
-
-    };
-
-}
+        riskLevel.textContent =
+            result.riskLevel;
 
 
+        if (result.riskLevel === "LOW RISK") {
 
-// ==========================================
-// SHOW VERIFICATION
-// ==========================================
+            riskLevel.style.background =
+                "#EDF8F2";
 
-function showVerification(verification) {
+            riskLevel.style.color =
+                "#247A57";
 
-    const result =
-        document.getElementById(
-            "verificationResult"
-        );
+        }
 
-
-    if (verification.verified) {
-
-        result.className =
-            "verification-result verified";
-
-
-        result.innerHTML = `
-            <i class="fa-solid fa-circle-check"></i>
-
-            <div>
-                <strong>DATA VERIFIED</strong>
-                <span>
-                    ${verification.message}
-                </span>
-            </div>
-        `;
-
-    } else {
-
-        result.className =
-            "verification-result mismatch";
-
-
-        result.innerHTML = `
-            <i class="fa-solid fa-triangle-exclamation"></i>
-
-            <div>
-                <strong>POSSIBLE DATA MISMATCH</strong>
-                <span>
-                    ${verification.message}
-                </span>
-            </div>
-        `;
-
-    }
-
-}
-
-
-
-// ==========================================
-// CALCULATE RISK
-// ==========================================
-
-function calculateRisk(
-    borrower,
-    rules
-) {
-
-    let score = 0;
-
-
-    const reasoning = [];
-
-
-    rules.forEach(rule => {
-
-        let matched = false;
-
-
-        // ==============================
-        // REPAYMENT BEHAVIOUR
-        // ==============================
-
-        if (
-            rule.field ===
-            "repaymentBehaviour"
+        else if (
+            result.riskLevel === "MEDIUM RISK"
         ) {
 
-            matched =
-                borrower.repaymentBehaviour ===
-                rule.condition;
+            riskLevel.style.background =
+                "#FFF6E5";
+
+            riskLevel.style.color =
+                "#B97813";
+
+        }
+
+        else {
+
+            riskLevel.style.background =
+                "#FFF0F0";
+
+            riskLevel.style.color =
+                "#B84040";
 
         }
 
 
-        // ==============================
-        // INCOME STABILITY
-        // ==============================
+        const reasoningList =
+            document.getElementById("reasoningList");
 
-        if (
-            rule.field ===
-            "incomeStability"
-        ) {
 
-            matched =
-                borrower.incomeStability ===
-                rule.condition;
+        reasoningList.innerHTML = "";
 
-        }
 
+        result.reasoning.forEach(item => {
 
-        // ==============================
-        // PREVIOUS DEFAULTS
-        // ==============================
+            const icon =
+                item.positive
+                    ? "fa-circle-check"
+                    : "fa-circle-exclamation";
 
-        if (
-            rule.field ===
-            "previousDefaults"
-        ) {
 
-            if (
-                rule.condition === "zero"
-            ) {
+            reasoningList.innerHTML += `
 
-                matched =
-                    borrower.previousDefaults === 0;
+                <div class="reasoning-item">
 
-            }
+                    <i class="fa-solid ${icon}"></i>
 
-        }
+                    <div>
 
+                        <strong>
+                            ${item.title}
+                        </strong>
 
-        // ==============================
-        // DEBT RATIO
-        // ==============================
+                        <p>
+                            ${item.description}
+                        </p>
 
-        if (
-            rule.field ===
-            "debtRatio"
-        ) {
-
-            const debtRatio =
-                borrower.monthlyIncome > 0
-                    ? borrower.monthlyDebt /
-                      borrower.monthlyIncome
-                    : 1;
-
-
-            if (
-                rule.condition === "low"
-            ) {
-
-                matched =
-                    debtRatio < 0.30;
-
-            }
-
-        }
-
-
-        // ==============================
-        // AFFORDABILITY
-        // ==============================
-
-        if (
-            rule.field ===
-            "affordability"
-        ) {
-
-            const disposableIncome =
-                borrower.monthlyIncome -
-                borrower.monthlyExpenses -
-                borrower.monthlyDebt;
-
-
-            if (
-                rule.condition === "good"
-            ) {
-
-                matched =
-                    disposableIncome > 0;
-
-            }
-
-        }
-
-
-        // ==============================
-        // ADD POINTS
-        // ==============================
-
-        if (matched) {
-
-            score +=
-                Number(rule.points);
-
-
-            reasoning.push({
-
-                type:
-                    "positive",
-
-
-                title:
-                    rule.name,
-
-
-                text:
-                    rule.description
-
-            });
-
-        } else {
-
-            reasoning.push({
-
-                type:
-                    "negative",
-
-
-                title:
-                    rule.name,
-
-
-                text:
-                    "The borrower did not meet this configured risk criterion."
-
-            });
-
-        }
-
-    });
-
-
-    // Keep between 0 and 100
-
-    score =
-        Math.max(
-            0,
-            Math.min(
-                100,
-                score
-            )
-        );
-
-
-    // ==============================
-    // RISK LEVEL
-    // ==============================
-
-    let risk;
-
-
-    if (score >= 75) {
-
-        risk =
-            "LOW RISK";
-
-    } else if (score >= 50) {
-
-        risk =
-            "MEDIUM RISK";
-
-    } else {
-
-        risk =
-            "HIGH RISK";
-
-    }
-
-
-    return {
-
-        score,
-        risk,
-        reasoning
-
-    };
-
-}
-
-
-
-// ==========================================
-// SHOW RISK RESULT
-// ==========================================
-
-function showRiskResult(
-    result,
-    verification
-) {
-
-    const section =
-        document.getElementById(
-            "resultSection"
-        );
-
-
-    section.classList.remove(
-        "hidden"
-    );
-
-
-    // SCORE
-
-    document.getElementById(
-        "riskScore"
-    ).textContent =
-        result.score;
-
-
-    // RISK LEVEL
-
-    const level =
-        document.getElementById(
-            "riskLevel"
-        );
-
-
-    level.textContent =
-        result.risk;
-
-
-    // COLOUR CLASS
-
-    level.className =
-        result.risk === "LOW RISK"
-            ? "low-risk"
-            : result.risk === "MEDIUM RISK"
-                ? "medium-risk"
-                : "high-risk";
-
-
-    // SUMMARY
-
-    let summary;
-
-
-    if (
-        result.risk ===
-        "LOW RISK"
-    ) {
-
-        summary =
-            "The borrower meets most configured risk criteria and demonstrates a stronger repayment profile.";
-
-    } else if (
-        result.risk ===
-        "MEDIUM RISK"
-    ) {
-
-        summary =
-            "The borrower meets some risk criteria but requires careful review of the weaker financial indicators.";
-
-    } else {
-
-        summary =
-            "The borrower meets few configured risk criteria and presents significant lending risk indicators.";
-
-    }
-
-
-    // ADD VERIFICATION WARNING
-
-    if (!verification.verified) {
-
-        summary +=
-            " Data verification also requires human review.";
-
-    }
-
-
-    document.getElementById(
-        "riskSummary"
-    ).textContent =
-        summary;
-
-
-    // ==============================
-    // SHOW REASONING
-    // ==============================
-
-    const reasoningList =
-        document.getElementById(
-            "reasoningList"
-        );
-
-
-    reasoningList.innerHTML =
-        "";
-
-
-    result.reasoning.forEach(
-        item => {
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-
-            div.className =
-                `reasoning-item ${item.type}`;
-
-
-            div.innerHTML = `
-
-                <i class="
-                    fa-solid
-                    ${item.type === "positive"
-                        ? "fa-circle-check"
-                        : "fa-circle-xmark"
-                    }
-                "></i>
-
-                <div>
-
-                    <strong>
-                        ${item.title}
-                    </strong>
-
-                    <p>
-                        ${item.text}
-                    </p>
+                    </div>
 
                 </div>
 
             `;
 
-
-            reasoningList.appendChild(
-                div
-            );
-
-        }
-    );
+        });
 
 
-    // Scroll to result
-
-    setTimeout(
-        () => {
-
-            section.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
-        },
-        200
-    );
-
-}
-
-
-
-// ==========================================
-// HUMAN DECISION
-// ==========================================
-
-document
-    .getElementById("approveButton")
-    .addEventListener(
-        "click",
-        function () {
-
-            saveHumanDecision(
-                "Approved"
-            );
-
-        }
-    );
-
-
-document
-    .getElementById("reviewButton")
-    .addEventListener(
-        "click",
-        function () {
-
-            saveHumanDecision(
-                "Under Review"
-            );
-
-        }
-    );
-
-
-document
-    .getElementById("declineButton")
-    .addEventListener(
-        "click",
-        function () {
-
-            saveHumanDecision(
-                "Declined"
-            );
-
-        }
-    );
-
-
-
-// ==========================================
-// SAVE HUMAN DECISION
-// ==========================================
-
-function saveHumanDecision(status) {
-
-    if (!currentApplicationId) {
-
-        return;
+        riskSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
 
     }
 
 
-    RiskIQStorage.updateApplication(
-        currentApplicationId,
-        {
-            status: status,
-            humanReviewed: true
-        }
-    );
+    // ==========================================
+    // SCORE ANIMATION
+    // ==========================================
+
+    function animateScore(targetScore) {
+
+        const scoreElement =
+            document.getElementById("riskScore");
 
 
-    const message =
-        document.getElementById(
-            "decisionMessage"
-        );
+        let currentScore = 0;
 
 
-    message.textContent =
-        `Human decision recorded: ${status}`;
+        const interval = setInterval(() => {
+
+            currentScore++;
+
+            scoreElement.textContent =
+                currentScore;
 
 
-    message.className =
-        "decision-message visible";
+            if (
+                currentScore >= targetScore
+            ) {
 
+                clearInterval(interval);
 
-    if (status === "Approved") {
+            }
 
-        message.classList.add(
-            "approved-message"
-        );
-
-    } else if (status === "Declined") {
-
-        message.classList.add(
-            "declined-message"
-        );
-
-    } else {
-
-        message.classList.add(
-            "review-message"
-        );
+        }, 15);
 
     }
 
-}
+
+    // ==========================================
+    // FORM SUBMIT
+    // ==========================================
+
+    form.addEventListener("submit", event => {
+
+        event.preventDefault();
+
+
+        verificationSection.classList.add("hidden");
+
+        riskSection.classList.add("hidden");
+
+        verificationActions.classList.add("hidden");
+
+
+        dataVerified = false;
+
+
+        currentApplication =
+            getFormData();
+
+
+        const verificationResult =
+            verifyBorrower(currentApplication);
+
+
+        showVerification(
+            verificationResult
+        );
+
+    });
+
+
+    // ==========================================
+    // HUMAN FINAL DECISION
+    // ==========================================
+
+    document
+        .querySelectorAll(".decision")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    if (!currentApplication) return;
+
+
+                    const decision =
+                        button.dataset.decision;
+
+
+                    currentApplication.decision =
+                        decision;
+
+
+                    currentApplication.reviewedAt =
+                        new Date().toLocaleString();
+
+
+                    RiskIQStorage.saveApplication(
+                        currentApplication
+                    );
+
+
+                    document.getElementById("step4")
+                        .classList.add("active");
+
+
+                    alert(
+                        "Decision saved successfully: " +
+                        decision
+                    );
+
+
+                    window.location.href =
+                        "loan-applications.html";
+
+                }
+            );
+
+        });
+
+});
