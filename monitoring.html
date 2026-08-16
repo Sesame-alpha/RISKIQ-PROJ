@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RiskIQ | Monitoring</title>
+
+    <link rel="stylesheet" href="monitoring.css">
+
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div>
+                <h1>RISK<span>IQ</span></h1>
+                <p>AI RISK INTELLIGENCE</p>
+            </div>
+        </div>
+
+        <nav>
+
+            <a href="index.html" class="nav-item">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="loan-applications.html" class="nav-item">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Loan Applications</span>
+            </a>
+
+            <a href="risk-assessment.html" class="nav-item">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Risk Assessment</span>
+            </a>
+
+            <a href="risk-rules.html" class="nav-item">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Risk Rules</span>
+            </a>
+
+            <a href="monitoring.html" class="nav-item active">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span>Monitoring</span>
+            </a>
+
+        </nav>
+
+        <button class="logout-btn" onclick="RiskIQStorage.logout()">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </button>
+
+    </aside>
+
+
+    <main>
+
+        <header>
+
+            <div>
+                <p class="eyebrow">EARLY WARNING SYSTEM</p>
+                <h2>Portfolio Monitoring</h2>
+            </div>
+
+            <div class="live-status">
+                <span></span>
+                Monitoring Active
+            </div>
+
+        </header>
+
+
+        <section class="content">
+
+            <div class="monitor-intro">
+
+                <div>
+                    <h1>Detect risk before it becomes a loss.</h1>
+                    <p>
+                        RiskIQ continuously highlights borrowers requiring
+                        lender attention based on risk and repayment behaviour.
+                    </p>
+                </div>
+
+                <div class="monitor-icon">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                </div>
+
+            </div>
+
+
+            <div class="alert-stats">
+
+                <div>
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Critical Alerts</span>
+                    <strong id="criticalCount">0</strong>
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-clock"></i>
+                    <span>Late Payment Risk</span>
+                    <strong id="lateCount">0</strong>
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-shield"></i>
+                    <span>Portfolio Monitored</span>
+                    <strong id="monitoredCount">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="alerts-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>Live Risk Alerts</h3>
+                        <p>Borrowers requiring attention</p>
+                    </div>
+
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+
+                <div id="alertsList">
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="storage.js"></script>
+<script src="monitoring.js"></script>
+
+</body>
+</html>
