@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RiskIQ | Dashboard</title>
+
+    <link rel="stylesheet" href="dashboard.css">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div>
+                <h1>RISK<span>IQ</span></h1>
+                <p>AI RISK INTELLIGENCE</p>
+            </div>
+        </div>
+
+        <nav>
+
+            <a href="index.html" class="nav-item active">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="loan-applications.html" class="nav-item">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Loan Applications</span>
+            </a>
+
+            <a href="risk-assessment.html" class="nav-item">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Risk Assessment</span>
+            </a>
+
+            <a href="risk-rules.html" class="nav-item">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Risk Rules</span>
+            </a>
+
+            <a href="monitoring.html" class="nav-item">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span>Monitoring</span>
+            </a>
+
+        </nav>
+
+        <button class="logout-btn" onclick="RiskIQStorage.logout()">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </button>
+
+    </aside>
+
+
+    <main>
+
+        <header>
+            <div>
+                <p class="eyebrow">RISK INTELLIGENCE PLATFORM</p>
+                <h2>Dashboard Overview</h2>
+            </div>
+
+            <div class="user-info">
+                <div class="avatar">CC</div>
+                <div>
+                    <strong>CodeCatalysts</strong>
+                    <small>Demo Administrator</small>
+                </div>
+            </div>
+        </header>
+
+
+        <section class="content">
+
+            <div class="welcome">
+                <div>
+                    <h1>Smarter lending starts with better decisions.</h1>
+                    <p>
+                        Monitor applications, assess borrower risk and identify
+                        potential repayment problems early.
+                    </p>
+                </div>
+
+                <a href="risk-assessment.html" class="primary-btn">
+                    New Assessment
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+
+            <div class="kpi-grid">
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </div>
+                    <p>Total Applications</p>
+                    <h2 id="totalApplications">0</h2>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon green">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <p>Approved</p>
+                    <h2 id="approvedApplications">0</h2>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon red">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <p>Declined</p>
+                    <h2 id="declinedApplications">0</h2>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon gold">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <p>High Risk</p>
+                    <h2 id="highRiskApplications">0</h2>
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-grid">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Recent Assessments</h3>
+                            <p>Latest borrower risk assessments</p>
+                        </div>
+
+                        <a href="loan-applications.html">
+                            View All
+                        </a>
+                    </div>
+
+                    <div id="recentApplications" class="application-list">
+                        <p class="empty">No assessments yet.</p>
+                    </div>
+
+                </div>
+
+
+                <div class="panel intelligence">
+
+                    <div class="intel-icon">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+
+                    <p class="eyebrow">RISK IQ ENGINE</p>
+
+                    <h3>Explainable Risk Intelligence</h3>
+
+                    <p>
+                        RiskIQ evaluates affordability, debt behaviour,
+                        repayment history, income stability and your
+                        organisation's custom risk rules.
+                    </p>
+
+                    <a href="risk-rules.html">
+                        Manage Risk Rules
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="storage.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>
